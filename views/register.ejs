@@ -1,0 +1,14 @@
+
+<section class="auth-section">
+  <div class="auth-card">
+    <h2>Create account</h2>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <form action="/auth/register" method="post">
+      <input name="name" placeholder="Full name" required>
+      <input name="email" placeholder="Email" required>
+      <input name="password" type="password" placeholder="Password" required>
+      <button class="btn" type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="/auth/login">Login</a></p>
+  </div>
+</section>

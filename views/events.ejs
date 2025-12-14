@@ -1,0 +1,88 @@
+<section class="events">
+  <div class="container">
+    <h1 style="color:#00e6ff;">Upcoming Events</h1>
+    <p class="muted">Events added by admins.</p>
+
+    <div class="card-grid">
+      <% events.forEach(e => { %>
+        <div class="card" id="event-<%= e._id %>">
+          <h3><%= e.title %></h3>
+          <p><strong>Sport:</strong> <%= e.sport || '—' %></p>
+          <p>
+            <strong>Date:</strong> <%= new Date(e.date).toLocaleDateString() %>
+            <%= e.time ? '(' + e.time + ')' : '' %>
+          </p>
+          <p><strong>Venue:</strong> <%= e.venue || 'TBA' %></p>
+
+          <% if (e.teams && e.teams.length) { %>
+            <p><strong>Teams:</strong></p>
+            <ul class="team-list" id="team-list-<%= e._id %>">
+              <% e.teams.forEach(t => { %>
+                <li>
+                  <span class="team-name"><%= t.name %></span>
+                  <% if (t.players && t.players.length) { %>
+                    <span class="members">(<%= t.players.map(p=>p.name).join(', ') %>)</span>
+                  <% } %>
+                </li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p id="team-list-<%= e._id %>">No teams yet.</p>
+          <% } %>
+
+          <% if (currentUser) { %>
+            <button class="btn btn-primary join-btn" data-event-id="<%= e._id %>">Join Event</button>
+            <p class="join-message" id="join-message-<%= e._id %>"></p>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.join-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const eventId = btn.dataset.eventId;
+      const messageEl = document.getElementById('join-message-' + eventId);
+      const teamListEl = document.getElementById('team-list-' + eventId);
+
+      try {
+        const res = await fetch('/events/' + eventId + '/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          messageEl.style.color = '#00ff8a';
+          messageEl.textContent = data.message;
+
+          // Add the new team to the team list
+          const li = document.createElement('li');
+          li.innerHTML = `<span class="team-name">${data.teamName}</span> (<span class="members">${data.players.join(', ')}</span>)`;
+
+          if (teamListEl.tagName === 'P') {
+            const ul = document.createElement('ul');
+            ul.className = 'team-list';
+            ul.id = 'team-list-' + eventId;
+            ul.appendChild(li);
+            teamListEl.replaceWith(ul);
+          } else {
+            teamListEl.appendChild(li);
+          }
+
+          btn.disabled = true;
+          btn.textContent = 'Joined';
+        } else {
+          messageEl.style.color = '#ff4c4c';
+          messageEl.textContent = data.message;
+        }
+      } catch (err) {
+        console.error(err);
+        messageEl.style.color = '#ff4c4c';
+        messageEl.textContent = 'Joined Event!';
+      }
+    });
+  });
+</script>

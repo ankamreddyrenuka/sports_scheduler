@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sport Scheduler</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">🏅 <span>Sport Scheduler</span></div>
+
+    <button id="hamburger" class="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <a href="/">Home</a>
+      <a href="/teams">Teams</a>
+      <a href="/events">Events</a>
+
+      <% if (currentUser && currentUser.role === 'admin') { %>
+        <a href="/admin">Admin</a>
+      <% } %>
+
+      <% if (!currentUser) { %>
+        <a href="/auth/login" class="login-btn">Login</a>
+        <a href="/auth/register" class="login-btn">Register</a>
+      <% } else { %>
+        <form action="/auth/logout" method="post" style="display:inline;">
+          <button class="login-btn" style="cursor:pointer">Logout</button>
+        </form>
+      <% } %>
+    </div>
+  </nav>
+
+  <!-- 👇 Add this section right below the navbar -->
+  <% if (currentUser) { %>
+    <div class="welcome-banner">
+      Welcome, <strong><%= currentUser.name %></strong> 👋
+    </div>
+  <% } %>
+  <!-- 👆 -->
+
+  <main>
+    <%- body %>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Sport Scheduler</p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+
+<section class="teams">
+  <div class="container">
+    <h1>Teams</h1>
+    <p class="muted">View teams.</p>
+
+    <div class="card-grid">
+      <% teams.forEach(t => { %>
+        <div class="card">
+          <h3><%= t.name %></h3>
+          <p>Players: <%= t.players ? t.players.length : 0 %></p>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

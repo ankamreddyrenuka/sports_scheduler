@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | Sport Scheduler</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h2>🏆 Admin Panel</h2>
+      <ul>
+        <li><a href="/admin">Dashboard</a></li>
+        <li><a href="#teams-section">Manage Teams</a></li>
+        <li><a href="#events-section">Manage Events</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="dashboard-main">
+      <h1>Welcome, <%= currentUser.name %> 👋</h1>
+      <p class="intro-text">Here’s a quick overview of your platform.</p>
+
+      <% if (currentUser && currentUser.role === 'admin') { %>
+
+      <!-- TEAMS SECTION -->
+      <section id="teams-section">
+        <h2>⚙️ Manage Teams</h2>
+        <form action="/teams" method="post" class="form-inline">
+          <input name="name" class="form-control" placeholder="Enter team name" required>
+          <button class="btn btn-primary">Add Team</button>
+        </form>
+
+        <div class="card-grid">
+          <% teams.forEach(team => { %>
+            <div class="card">
+              <h3><%= team.name %></h3>
+              <div class="card-actions">
+                <form action="/teams/<%= team._id %>?_method=PUT" method="post">
+                  <input name="name" placeholder="Rename team" required>
+                  <button class="btn btn-warning btn-sm">Update</button>
+                </form>
+                <form action="/teams/<%= team._id %>?_method=DELETE" method="post">
+                  <button class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+
+      <hr>
+
+      <!-- EVENTS SECTION -->
+      <section id="events-section">
+        <h2>🏅 Manage Events</h2>
+        <form action="/events" method="post" class="grid-form">
+          <input name="title" placeholder="Event title" required>
+          <input name="sport" placeholder="Sport (e.g. Football)">
+          <input name="date" type="date" required>
+          <input name="time" placeholder="Time (e.g. 15:00)">
+          <input name="venue" placeholder="Venue">
+          <select name="teams" multiple required>
+            <% teams.forEach(t => { %>
+              <option value="<%= t._id %>"><%= t.name %></option>
+            <% }) %>
+          </select>
+          <textarea name="description" placeholder="Description"></textarea>
+          <button class="btn btn-success">Create Event</button>
+        </form>
+
+        <div class="card-grid">
+          <% events.forEach(event => { %>
+            <div class="card">
+              <h3><%= event.title %></h3>
+              <p><strong>Sport:</strong> <%= event.sport || '—' %></p>
+              <p><strong>Date:</strong> <%= new Date(event.date).toLocaleDateString() %> <%= event.time ? '('+event.time+')' : '' %></p>
+              <p><strong>Venue:</strong> <%= event.venue || 'TBA' %></p>
+              <p><strong>Teams:</strong>
+                <%= event.teams?.map(t => t.name).join(', ') || '—' %>
+              </p>
+
+              <div class="card-actions">
+                <form action="/events/<%= event._id %>?_method=PUT" method="post">
+                  <input name="title" placeholder="New title">
+                  <button class="btn btn-warning btn-sm">Update</button>
+                </form>
+                <form action="/events/<%= event._id %>?_method=DELETE" method="post">
+                  <button class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+
+      <% } else { %>
+        <p class="no-access">🚫 You do not have permission to view this page.</p>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

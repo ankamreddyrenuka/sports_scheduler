@@ -1,0 +1,18 @@
+
+
+<div class="row">
+  <div class="col-md-8">
+    <h2><%= event.title %></h2>
+    <p><strong>Date:</strong> <%= new Date(event.date).toLocaleString() %></p>
+    <p><strong>Location:</strong> <%= event.location || 'N/A' %></p>
+    <p><strong>Description:</strong> <%= event.description || 'No description' %></p>
+    <p><strong>Teams:</strong> 
+      <% if (event.teams && event.teams.length) { %>
+        <%= event.teams.map(t=>t.name).join(', ') %>
+      <% } else { %>
+        none
+      <% } %>
+    </p>
+    <a class="btn btn-secondary" href="/events">Back</a>
+  </div>
+</div>

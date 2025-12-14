@@ -1,0 +1,41 @@
+
+
+<div class="row">
+  <div class="col-md-8">
+    <h2><%= event ? 'Edit Event' : 'Create Event' %></h2>
+
+    <form action="<%= event ? ('/events/' + event._id + '?_method=PUT') : '/events' %>" method="POST">
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input class="form-control" name="title" value="<%= event ? event.title : '' %>" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description"><%= event ? event.description : '' %></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Date & Time</label>
+        <input class="form-control" name="date" type="datetime-local" value="<%= event ? new Date(event.date).toISOString().slice(0,16) : '' %>" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input class="form-control" name="location" value="<%= event ? event.location : '' %>">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Teams (select one or more)</label>
+        <select name="teamIds" multiple class="form-select">
+          <% teams.forEach(function(t){ %>
+            <option value="<%= t._id %>" <%= event && event.teams && event.teams.find(id => String(id) === String(t._id)) ? 'selected' : '' %> ><%= t.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <button class="btn btn-success" type="submit">Save</button>
+      <a class="btn btn-secondary" href="/events">Cancel</a>
+    </form>
+  </div>
+</div>
