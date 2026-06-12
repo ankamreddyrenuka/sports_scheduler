@@ -31,7 +31,6 @@ async function connectDB() {
     serverSelectionTimeoutMS: serverSelectionTimeout,
     socketTimeoutMS: socketTimeout,
     connectTimeoutMS: serverSelectionTimeout,
-    bufferTimeoutMS: isProduction ? 45000 : 15000,
     maxPoolSize: isProduction ? 10 : 5,
     minPoolSize: isProduction ? 2 : 1,
     retryWrites: true,
