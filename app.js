@@ -31,11 +31,18 @@ async function connectDB() {
     serverSelectionTimeoutMS: serverSelectionTimeout,
     socketTimeoutMS: socketTimeout,
     connectTimeoutMS: serverSelectionTimeout,
+    bufferTimeoutMS: isProduction ? 45000 : 15000,
     maxPoolSize: isProduction ? 10 : 5,
     minPoolSize: isProduction ? 2 : 1,
     retryWrites: true,
     w: 'majority'
   };
+
+  // Add connection lifecycle logging to help diagnose deployment issues
+  mongoose.connection.on('connecting', () => console.log('Mongoose: connecting...'));
+  mongoose.connection.on('connected', () => console.log('Mongoose: connected'));
+  mongoose.connection.on('error', (err) => console.error('Mongoose error:', err));
+  mongoose.connection.on('disconnected', () => console.warn('Mongoose: disconnected'));
 
   if (!forceAtlas && looksLikeAtlas && !isProduction) {
     console.warn('Detected Atlas/ SRV Mongo URI and FORCE_ATLAS not set (dev mode). Skipping remote connect and attempting local fallback to avoid DNS SRV resolution errors. Set FORCE_ATLAS=true to override.');
@@ -120,4 +127,4 @@ app.use('/teams', require('./routes/teams'));
 app.use('/events', require('./routes/events'));
 
 /* Start */
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Server is started after a successful DB connection in startServer()
