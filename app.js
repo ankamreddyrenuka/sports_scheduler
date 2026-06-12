@@ -22,10 +22,25 @@ const sessionMongoUrl = (forceAtlas || !looksLikeAtlas) ? MONGO : localMongo;
 
 /* DB */
 async function connectDB() {
-  if (!forceAtlas && looksLikeAtlas) {
-    console.warn('Detected Atlas/ SRV Mongo URI and FORCE_ATLAS not set. Skipping remote connect and attempting local fallback to avoid DNS SRV resolution errors. Set FORCE_ATLAS=true to override.');
+  const isProduction = process.env.NODE_ENV === 'production';
+  // Increase timeouts for production (Render, etc.)
+  const serverSelectionTimeout = isProduction ? 30000 : 5000;
+  const socketTimeout = isProduction ? 45000 : 10000;
+  
+  const mongoOptions = {
+    serverSelectionTimeoutMS: serverSelectionTimeout,
+    socketTimeoutMS: socketTimeout,
+    connectTimeoutMS: serverSelectionTimeout,
+    maxPoolSize: isProduction ? 10 : 5,
+    minPoolSize: isProduction ? 2 : 1,
+    retryWrites: true,
+    w: 'majority'
+  };
+
+  if (!forceAtlas && looksLikeAtlas && !isProduction) {
+    console.warn('Detected Atlas/ SRV Mongo URI and FORCE_ATLAS not set (dev mode). Skipping remote connect and attempting local fallback to avoid DNS SRV resolution errors. Set FORCE_ATLAS=true to override.');
     try {
-      await mongoose.connect(localMongo, { serverSelectionTimeoutMS: 5000 });
+      await mongoose.connect(localMongo, mongoOptions);
       console.log('Connected to local MongoDB');
       return;
     } catch (err) {
@@ -35,18 +50,23 @@ async function connectDB() {
   }
 
   try {
-    await mongoose.connect(MONGO, { serverSelectionTimeoutMS: 5000 });
-    console.log('Mongo connected');
+    console.log(`Connecting to MongoDB... (env: ${isProduction ? 'production' : 'development'}, timeout: ${serverSelectionTimeout}ms)`);
+    await mongoose.connect(MONGO, mongoOptions);
+    console.log('✓ MongoDB connected successfully');
   } catch (err) {
-    console.error('Mongo error', err);
-    if (MONGO !== localMongo) {
+    console.error('✗ MongoDB connection error:', err.message);
+    // On production (Render), don't fall back - let it fail clearly
+    if (!isProduction && MONGO !== localMongo) {
       console.log('Falling back to local MongoDB...');
       try {
-        await mongoose.connect(localMongo, { serverSelectionTimeoutMS: 5000 });
+        await mongoose.connect(localMongo, mongoOptions);
         console.log('Connected to local MongoDB');
       } catch (err2) {
         console.error('Local Mongo connection failed', err2);
+        throw err2;
       }
+    } else {
+      throw err;
     }
   }
 }
