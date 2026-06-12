@@ -14,10 +14,44 @@ const PORT = process.env.PORT || 3000;
 const MONGO = process.env.MONGO_URI || 'mongodb://localhost:27017/sport-scheduler';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'secret';
 
+const localMongo = 'mongodb://localhost:27017/sport-scheduler';
+const looksLikeAtlas = typeof MONGO === 'string' && (MONGO.includes('mongodb.net') || MONGO.startsWith('mongodb+srv://'));
+const forceAtlas = process.env.FORCE_ATLAS === 'true';
+// If FORCE_ATLAS=true, attempt the provided MONGO (Atlas) URI first.
+const sessionMongoUrl = (forceAtlas || !looksLikeAtlas) ? MONGO : localMongo;
+
 /* DB */
-mongoose.connect(MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(()=> console.log('Mongo connected'))
-  .catch(err => console.error('Mongo error', err));
+async function connectDB() {
+  if (!forceAtlas && looksLikeAtlas) {
+    console.warn('Detected Atlas/ SRV Mongo URI and FORCE_ATLAS not set. Skipping remote connect and attempting local fallback to avoid DNS SRV resolution errors. Set FORCE_ATLAS=true to override.');
+    try {
+      await mongoose.connect(localMongo, { serverSelectionTimeoutMS: 5000 });
+      console.log('Connected to local MongoDB');
+      return;
+    } catch (err) {
+      console.error('Local Mongo connection failed', err);
+      return;
+    }
+  }
+
+  try {
+    await mongoose.connect(MONGO, { serverSelectionTimeoutMS: 5000 });
+    console.log('Mongo connected');
+  } catch (err) {
+    console.error('Mongo error', err);
+    if (MONGO !== localMongo) {
+      console.log('Falling back to local MongoDB...');
+      try {
+        await mongoose.connect(localMongo, { serverSelectionTimeoutMS: 5000 });
+        console.log('Connected to local MongoDB');
+      } catch (err2) {
+        console.error('Local Mongo connection failed', err2);
+      }
+    }
+  }
+}
+
+connectDB();
 
 /* Middlewares */
 app.use(morgan('dev'));
@@ -31,7 +65,9 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: MONGO }),
+  store: MongoStore.create({ mongoUrl: sessionMongoUrl }),
+  // Use sessionMongoUrl to avoid SRV lookups when an Atlas URI is present
+  // (sessionMongoUrl defined above)
   cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 

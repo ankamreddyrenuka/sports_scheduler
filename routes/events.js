@@ -66,7 +66,7 @@ router.post('/:id/join', ensureAuth, async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'JOINED!' });
+    res.status(500).json({ success: false, message: 'JOINED!g' });
   }
 });
 
