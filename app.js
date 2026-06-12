@@ -71,7 +71,17 @@ async function connectDB() {
   }
 }
 
-connectDB();
+async function startServer() {
+  try {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  } catch (err) {
+    console.error('Server startup failed:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 /* Middlewares */
 app.use(morgan('dev'));
