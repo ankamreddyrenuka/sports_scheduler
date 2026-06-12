@@ -39,17 +39,25 @@ router.post('/:id/join', ensureAuth, async (req, res) => {
     if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
     // Check if user is already in any team in this event
-    const alreadyJoined = event.teams.some(team =>
-      team.players.some(p => p._id.toString() === userId.toString())
-    );
+    const alreadyJoined = event.teams.some(team => {
+      // Check if team has players and if user is among them
+      if (!team || !team.players || team.players.length === 0) return false;
+      return team.players.some(p => {
+        if (!p) return false;
+        // Handle both ObjectId references and embedded objects
+        const playerId = p._id ? p._id.toString() : (typeof p === 'object' ? p.toString() : p);
+        return playerId === userId.toString();
+      });
+    });
     if (alreadyJoined) {
       return res.json({ success: false, message: 'You already joined' });
     }
 
-    // Create a new team for the user
+    // Create a new team for the user with proper player object
     const newTeam = await Team.create({
       name: `${userName}'s Team`,
-      players: [userId]
+      players: [{ name: userName, position: 'Player' }],
+      createdBy: userId
     });
 
     event.teams.push(newTeam._id);
